@@ -365,7 +365,7 @@ if __name__ == '__main__':
     
     
     args = parser.parse_args()
-    # annotate_videos(args.videos, args.bbox, args.out_trajectory)
-    # prepare_plain_videos(args.videos, args.bbox, args.out_plain)
-    # prepare_labels(args.bbox, args.labels, args.out_plain)
+    annotate_videos(args.videos, args.bbox, args.out_trajectory)
+    prepare_plain_videos(args.videos, args.bbox, args.out_plain)
+    prepare_labels(args.bbox, args.labels, args.out_plain)
     prepare_training_json(args.out_plain)
