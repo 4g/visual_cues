@@ -11,7 +11,7 @@ NPROC_PER_NODE=${NPROC_PER_NODE:-1}
 deepspeed=./scripts/zero3.json
 
 # Model configuration
-llm=Qwen/Qwen3-VL-2B-Instruct  # Using HuggingFace model ID
+llm=Qwen/Qwen3-VL-4B-Instruct  # Using HuggingFace model ID
 
 # Training hyperparameters
 lr=1e-4
@@ -22,10 +22,10 @@ grad_accum_steps=4
 entry_file=qwenvl/train/train_qwen.py
 
 # Dataset configuration (replace with public dataset names)
-datasets=ssv2_trajectory
+datasets=ssv2_trajectory,ssv2_plain
 
 # Output configuration
-run_name="qwen3vl-2b-trajectory"
+run_name="qwen3vl-4b"
 output_dir=./output_test
 
 # Training arguments

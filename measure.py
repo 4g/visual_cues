@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import requests
 import time
+from tqdm import tqdm
 
 openai_api_key = "EMPTY"
 openai_api_base = "http://localhost:8000/v1"
@@ -25,11 +26,16 @@ def start_vllm(model_path):
         "--max-model-len", "16384",
         "--media-io-kwargs", json.dumps({"video": {"num_frames": 64}}),
         "--gpu-memory-utilization",  "0.75"
-    ], env=env)
+    ],
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL, 
+    env=env)
     
     url = "http://localhost:8000/v1/models"
     
-    for i in range(600):  # wait up to ~600 seconds
+    totaltime = 600
+    sleeptime = 10
+    for i in range(totaltime // sleeptime):  # wait up to ~600 seconds
         try:
             r = requests.get(url, timeout=1)
             if r.status_code == 200:
@@ -37,9 +43,10 @@ def start_vllm(model_path):
                 break
             else:
                 print("waiting for vLLM server up", model_path)
-        except Exception:
-            pass
-        time.sleep(1)
+        except:
+            print("waiting for vLLM server up", model_path)
+            
+        time.sleep(sleeptime)
     else:
         raise RuntimeError("vLLM server did not start in time")
     
@@ -66,10 +73,13 @@ def run_video(video_url, question, model_path) -> None:
                 ],
             }
         ],
-        temperature=0.0,
+        seed=3407,
+        temperature=0.1,
+        top_p=0.8,
+        extra_body={"top_k": 20, "repetition_penalty":1.0, "presence_penalty":1.5, "guided_choice": question['choices']},
         model=model_path,
         max_completion_tokens=16,
-        extra_body={"guided_choice": question['choices']},
+        
     )
 
     result = chat_completion_from_url.choices[0].message.content
@@ -79,16 +89,17 @@ def measure(test, videos, model_path):
     videos = Path(videos)
 
     data = json.load(open(test))
-    total = 0
-    correct = 0
-    for elem in data[:1000]:
+    total = {}
+    correct = {}
+    for elem in tqdm(data, desc=f"{model_path}:{videos}"):
         question = elem['metadata']
         video_url = videos / elem['video']
         result = run_video(str(video_url), question, model_path)
         answer = question['answer']
+        type = question["type"]
         if result == answer:
-            correct += 1
-        total += 1
+            correct[type] = correct.get(type, 0) + 1
+        total[type] = total.get(type, 0) + 1
     return correct, total
 
 if __name__ == '__main__':
@@ -97,22 +108,25 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', required=True)
 
-    parser.add_argument('--model_plain', required=True)
-    parser.add_argument('--model_trajectory', required=True)
+    parser.add_argument('--model', required=True)
     
     parser.add_argument('--videos_trajectory', required=True)
     parser.add_argument('--videos_plain', required=True)
     
     args = parser.parse_args()
     results = []
-    for model_path in [args.model_plain, args.model_trajectory, 'Qwen/Qwen3-VL-2B-Instruct']:
+    models = [args.model, 'Qwen/Qwen3-VL-4B-Instruct']
+    
+    for model_path in models:
         vllm_proc = start_vllm(model_path)
         for video_path in [args.videos_plain, args.videos_trajectory]:
             correct, total = measure(args.test, video_path, model_path)
-            results.append([correct, total, model_path, video_path])
-        
+            result = [correct, total, model_path, video_path]
+            results.append(result)
+            print(result)
+
         vllm_proc.terminate()
-    
+
     print("============================")
     for result in results:
         print(result)

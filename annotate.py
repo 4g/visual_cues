@@ -296,7 +296,8 @@ def prepare_training_json(out_path):
                 "question": template.replace(elem[0], '_____'),
                 "choices": choices,
                 "answer": elem[1],
-                "video": label["id"]
+                "video": label["id"],
+                "type": type
             }
 
             all_samples[shard].append(sample)
@@ -365,7 +366,7 @@ if __name__ == '__main__':
     
     
     args = parser.parse_args()
-    annotate_videos(args.videos, args.bbox, args.out_trajectory)
-    prepare_plain_videos(args.videos, args.bbox, args.out_plain)
-    prepare_labels(args.bbox, args.labels, args.out_plain)
+    # annotate_videos(args.videos, args.bbox, args.out_trajectory)
+    # prepare_plain_videos(args.videos, args.bbox, args.out_plain)
+    # prepare_labels(args.bbox, args.labels, args.out_plain)
     prepare_training_json(args.out_plain)

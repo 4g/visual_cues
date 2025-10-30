@@ -17,7 +17,7 @@ def merge_lora(lora_path, save_path):
 
     model = PeftModel.from_pretrained(model, lora_path)
     model.eval()
-
+    
     merged = model.merge_and_unload() 
 
     processor = AutoProcessor.from_pretrained(base_model_id)

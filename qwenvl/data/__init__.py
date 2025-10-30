@@ -1,14 +1,17 @@
 import re
+from pathlib import Path
+
+data_path = Path('data')
 
 SSV2_PLAIN = {
-    "annotation_path": "/home/apurva/projects/video_data/ssv2/videos_plain/qwen_format_train.json",
-    "data_path": "/home/apurva/projects/video_data/ssv2/videos_plain/",
+    "annotation_path": str(data_path / "qwen_format_train.json"),
+    "data_path": str(data_path / "videos_plain/"),
 }
 
 
 SSV2_TRAJECTORY = {
-    "annotation_path": "/home/apurva/projects/video_data/ssv2/videos_plain/qwen_format_train.json",
-    "data_path": "/home/apurva/projects/video_data/ssv2/videos_with_trajectory/",
+    "annotation_path": str(data_path / "qwen_format_train.json"),
+    "data_path": str(data_path / "videos_with_trajectory/"),
 }
 
 data_dict = {
