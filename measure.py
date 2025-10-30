@@ -115,7 +115,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     results = []
-    models = [args.model, 'Qwen/Qwen3-VL-4B-Instruct']
+    models = [args.model, 'Qwen/Qwen3-VL-2B-Instruct']
     
     for model_path in models:
         vllm_proc = start_vllm(model_path)

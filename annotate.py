@@ -273,9 +273,10 @@ def prepare_training_json(out_path):
                 tmp = label["template"]
                 for i, j in _:
                     tmp = tmp.replace(i, j)
-                results.append([elem, tmp])
+                results.append([label['id'], elem, tmp])
         
-        for elem, template in results:
+        for video, elem, template in results:
+            
             if 'something' in elem[0]:
                 type = 'object'
                 cset = objects
@@ -296,7 +297,7 @@ def prepare_training_json(out_path):
                 "question": template.replace(elem[0], '_____'),
                 "choices": choices,
                 "answer": elem[1],
-                "video": label["id"],
+                "video": video,
                 "type": type
             }
 
