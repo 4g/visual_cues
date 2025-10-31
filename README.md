@@ -41,11 +41,12 @@ Create multiple choice questions for every video, to predict the object or verb
 ```
 
 #### Setup
-- We split the dataset into test:train::1000:8500 
+- We split the dataset into test:train::1:8.5 
 - Each video has average of 2.5 questions
-- This results in ~42k training samples
-- We train a single model with both plain and cued videos for 1 epoch
+- ~42k training samples, 2.5k test samples for cued and 2.5k for plain
+- We train a single model with both plain and cued videos
     - base = qwenvl3 2b/4b instruct
+    - bs = 8, grad acc = 4, 1 epoch = ~1.3k steps
     - lora `(rank=64, alpha=64)` over llm only
     - cosine lr with peak 1e-4, and warmup of 3%
 - vllm for inference with guided response choices 
@@ -68,6 +69,18 @@ After finetuning, cued videos perform worse in both object and verb category.
 ## Interpretation
 ### Attention maps
 What happens to attention when we add these boxes and trajectory lines ? Intuitively, results should be much better because there is a clear indicator of region which will fetch correct answer. But something else happens.  
+
+We debug this in multiple ways by checking attention of vit, llm and measuring perplexity of different types of images. 
+
+- **Attention disrupted** : visual cues attract attention away from natural visual features [attach map]
+
+- **VLMs have fragmented attention**: VLMs are a combination of a clip based embedder and an llm. In this exercise we finetune only the language part. [show clip attention map, and compare with llm attentions]
+
+- **Model bias**: pretrained models that have not see many trajectories or bounding boxes, dont interpret these as natural features and get confused. [high activations on bbox boundaries, not inside]
+
+- **Cues are a different language** from natural visual features. They require understanding abstractions. e.g. a black triangle on road implies slope ahead. [add examples of perplexity of a visual cues being much higher than a normal image] 
+
+This indicates that instead of reinforcing relevant regions, trajectory overlays can diffuse or misplace the model’s focus.
 
 ## Reproduce
 
