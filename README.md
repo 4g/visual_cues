@@ -8,8 +8,8 @@ TLDR : Not really.
 ![plain video ](assets/plain.gif) ![trajectory and bbox cues](assets/trajectory.gif)
 
 ## Experiment
-### Data
-A 10k video subset of ssv2 dataset which has 50 verbs and ~4000 objects. 
+### Training
+A ~9.5k video subset of ssv2 dataset which has 50 verbs and ~4000 objects. 
 
 ```python
 >> random.sample(verbs, 5)
@@ -20,23 +20,50 @@ A 10k video subset of ssv2 dataset which has 50 verbs and ~4000 objects.
 ```
 
 Create multiple choice questions for every video, to predict the object or verb 
-|  |  |
+|Video plain / cued| mcq |
 |---|---|
-| ![video 137108 preview](assets/ice_plain.gif) OR ![video 137108 preview](assets/ice_cues.gif) | **Q1.** dropping _____ into red rubber ice-tray.  <br>**Options:** crumpled paper \| a gift bag \| thermos bottle \| **a cheese cube**  <br>**Answer:** a cheese cube  <br><br> **Q2.** dropping a cheese cube into _____.  <br>**Options:** dettol bottle \| salt shaker \| stack plastic cups \| **red rubber ice-tray**  <br>**Answer:** red rubber ice-tray  <br><br> **Q3.** _____ a cheese cube into red rubber ice-tray.  <br>**Options:** hitting \| pulling \| falling \| **dropping**  <br>**Answer:** dropping |
+| ![video 137108 preview](assets/ice_plain.gif) ![video 137108 preview](assets/ice_cues.gif) | **Q1.** dropping _____ into red rubber ice-tray.  <br>**Options:** crumpled paper \| a gift bag \| thermos bottle \| **a cheese cube**  <br>**Answer:** a cheese cube  <br><br> **Q2.** dropping a cheese cube into _____.  <br>**Options:** dettol bottle \| salt shaker \| stack plastic cups \| **red rubber ice-tray**  <br>**Answer:** red rubber ice-tray  <br><br> **Q3.** _____ a cheese cube into red rubber ice-tray.  <br>**Options:** hitting \| pulling \| falling \| **dropping**  <br>**Answer:** dropping |
 
-### Cues
+Training sample
+```json
+{
+   "question": "_____ plastic spoon down",
+   "choices": [
+    "moving",
+    "tipping",
+    "lifting",
+    "folding"
+   ],
+   "answer": "moving",
+   "video": "104789",
+   "type": "verb"
+  }
+```
 
-### Model
-Qwen3vl 2b/4b. 
+
+- We split the dataset into test:train::1000:8500 
+- Each video has average of 2.5 questions
+- This results in ~42k training samples
+- We train a qwenvl3 2b/4b instruct model using lora `(rank=64, alpha=64)` over llm only
+- We train with both plain and trajectory videos for 1 epoch
+- vllm for inference with guided response choices 
+
 ### Results
+Before finetuning, both object and verb accuracy are lower for cued videos. 
 | model                      | videos      | object_acc | verb_acc | overall_acc |
 |---------------------------|-------------|-----------:|---------:|------------:|
-| finetuned                  | plain       | 96.40%     | 98.30%   | 97.29%      |
-| finetuned                  | trajectory  | 93.77%     | 98.00%   | 95.65%      |
 | pretrained | plain       | 90.77%     | 63.90%   | 79.39%      |
 | pretrained | trajectory  | 85.74%     | 64.40%   | 76.29%      |
 
 
+After finetuning too, cued videos perform worse than plain. 
+| model                      | videos      | object_acc | verb_acc | overall_acc |
+|---------------------------|-------------|-----------:|---------:|------------:|
+| finetuned                  | plain       | 96.40%     | 98.30%   | 97.29%      |
+| finetuned                  | trajectory  | 93.77%     | 98.00%   | 95.65%      |
+
+
+## Interpretation
 ### Attention maps
 What happens to attention when we add these boxes and trajectory lines ? Intuitively, results should be much better because there is a clear indicator of region which will fetch correct answer. But something else happens.  
 
@@ -62,8 +89,7 @@ This will download training and test videos, and pretrained lora adapter into `d
 ```
 python measure.py
 ```
-- Brings up a vllm server with finetuned model
-- 
+- Brings up a vllm server with both finetuned and pretrained model and measures results
 
 ### Training
 
