@@ -1,20 +1,33 @@
 # Do visual cues help vllms ? 
 
-TLDR : Not really. 
-
 ## Problem
-VLMs are very good at identifying events in videos. But it is hard to focus their attention on a specific action or object, specially if the object or action is a small part of the video. Humans use visual cues to attract attention towards a region or action, e.g. a stop sign on the road or a wiggly line drawn under wrongly spelled text. Once focused we can observe finegrained details from that region. We experiment if using similar visual cues helps VLMs focus better.
+VLMs are very good at identifying events in videos. But it is hard to focus their attention on a specific action or object, specially if the object or action is a small part of the video. Humans use visual cues to attract attention towards a region or action, e.g. a stop sign on the road or a wiggly line drawn under wrongly spelled text. Once focused we can observe finegrained details from that region. This experiment is to determine if using visual cues like bboxes/trajectories will help VLMs focus better.
+
+TLDR : Not really.
 
 ![plain video ](assets/plain.gif) ![trajectory and bbox cues](assets/trajectory.gif)
 
 ## Experiment
 ### Data
-We use a 10k video subset of ssv2 dataset 
+A 10k video subset of ssv2 dataset which has 50 verbs and ~4000 objects. 
+
+```python
+>> random.sample(verbs, 5)
+>> ['picking', 'dropping', 'throwing', 'poking', 'twisting']
+
+>> random.sample(objects, 5)
+>> ['a teaspoon', 'amrutanjan balm', 'teapoy', 'a pamphlet', 'salt container']
+```
+
+Create multiple choice questions for every video, to predict the object or verb 
+|  |  |
+|---|---|
+| ![video 137108 preview](assets/ice_plain.gif) OR ![video 137108 preview](assets/ice_cues.gif) | **Q1.** dropping _____ into red rubber ice-tray.  <br>**Options:** crumpled paper \| a gift bag \| thermos bottle \| **a cheese cube**  <br>**Answer:** a cheese cube  <br><br> **Q2.** dropping a cheese cube into _____.  <br>**Options:** dettol bottle \| salt shaker \| stack plastic cups \| **red rubber ice-tray**  <br>**Answer:** red rubber ice-tray  <br><br> **Q3.** _____ a cheese cube into red rubber ice-tray.  <br>**Options:** hitting \| pulling \| falling \| **dropping**  <br>**Answer:** dropping |
 
 ### Cues
 
 ### Model
-
+Qwen3vl 2b/4b. 
 ### Results
 | model                      | videos      | object_acc | verb_acc | overall_acc |
 |---------------------------|-------------|-----------:|---------:|------------:|
@@ -24,14 +37,40 @@ We use a 10k video subset of ssv2 dataset
 | pretrained | trajectory  | 85.74%     | 64.40%   | 76.29%      |
 
 
+### Attention maps
+What happens to attention when we add these boxes and trajectory lines ? Intuitively, results should be much better because there is a clear indicator of region which will fetch correct answer. But something else happens.  
 
-## Reproduce on own
+## Reproduce
 
-Clone repo
+#### Clone repo
+```sh
+git clone https://github.com/4g/visual_cues.git
+cd visual_cues
+```
 
-Clone data
-`https://huggingface.co/datasets/apurvagup/visual_cues_ssv2/`
 
-### Run training 
+#### Clone data and adapters
+
+```sh
+python prepare_data.py
+
+hf download --repo_type dataset --repo_id apurvagup/visual_cues_ssv2/ --local_dir ./data/
+```
+This will download training and test videos, and pretrained lora adapter into `data/`
+
+#### Run measurements
+```
+python measure.py
+```
+- Brings up a vllm server with finetuned model
+- 
+
+### Training
+
+```sh
+sh scripts/lora_2b.sh
+```
+
+
 
 
