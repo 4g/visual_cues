@@ -24,7 +24,7 @@ Create multiple choice questions for every video, to predict the object or verb
 |---|---|
 | ![video 137108 preview](assets/ice_plain.gif) ![video 137108 preview](assets/ice_cues.gif) | **Q1.** dropping _____ into red rubber ice-tray.  <br>**Options:** crumpled paper \| a gift bag \| thermos bottle \| **a cheese cube**  <br>**Answer:** a cheese cube  <br><br> **Q2.** dropping a cheese cube into _____.  <br>**Options:** dettol bottle \| salt shaker \| stack plastic cups \| **red rubber ice-tray**  <br>**Answer:** red rubber ice-tray  <br><br> **Q3.** _____ a cheese cube into red rubber ice-tray.  <br>**Options:** hitting \| pulling \| falling \| **dropping**  <br>**Answer:** dropping |
 
-Training sample
+#### Training sample
 ```json
 {
    "question": "_____ plastic spoon down",
@@ -40,23 +40,25 @@ Training sample
   }
 ```
 
-
+#### Setup
 - We split the dataset into test:train::1000:8500 
 - Each video has average of 2.5 questions
 - This results in ~42k training samples
-- We train a qwenvl3 2b/4b instruct model using lora `(rank=64, alpha=64)` over llm only
-- We train with both plain and trajectory videos for 1 epoch
+- We train a single model with both plain and cued videos for 1 epoch
+    - base = qwenvl3 2b/4b instruct
+    - lora `(rank=64, alpha=64)` over llm only
+    - cosine lr with peak 1e-4, and warmup of 3%
 - vllm for inference with guided response choices 
 
 ### Results
-Before finetuning, both object and verb accuracy are lower for cued videos. 
+Before finetuning, object accuracy is lower for cued videos. 
 | model                      | videos      | object_acc | verb_acc | overall_acc |
 |---------------------------|-------------|-----------:|---------:|------------:|
 | pretrained | plain       | 90.77%     | 63.90%   | 79.39%      |
 | pretrained | trajectory  | 85.74%     | 64.40%   | 76.29%      |
 
 
-After finetuning too, cued videos perform worse than plain. 
+After finetuning, cued videos perform worse in both object and verb category. 
 | model                      | videos      | object_acc | verb_acc | overall_acc |
 |---------------------------|-------------|-----------:|---------:|------------:|
 | finetuned                  | plain       | 96.40%     | 98.30%   | 97.29%      |
